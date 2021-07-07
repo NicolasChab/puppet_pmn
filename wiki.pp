@@ -17,13 +17,13 @@ service {
 
 #exec { 
 #  'download docuwiki':
-#    path    => '/usr/bin',
+#    path    => ['/usr/bin', '/usr/sbin'],
 #    command => 'wget -O /usr/src/dokuwiki.tgz \
 #    https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz';
 #
 #  'unZip du fichier':
 #    cwd     => '/usr/src',
-#    path    => '/usr/bin',
+#    path    => ['/usr/bin', '/usr/sbin'],
 #    command => 'tar -xavf dokuwiki.tgz';
 #}
 
@@ -31,15 +31,14 @@ file {
   'download docuwiki':
     checksum_value => '8867b6a5d71ecb5203402fe5e8fa18c9',
     ensure => present,
-    path   => '/usr/src',
+    path   => '/usr/src/dokuwiki.tgz',
     source => 'https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz';
-    
 }
 
 exec {
   'unZip du fichier':
     cwd     => '/usr/src',
-    path    => '/usr/bin',
+    path    => ['/usr/bin', '/usr/sbin'],
     command => 'tar -xavf dokuwiki.tgz';
 }
 
