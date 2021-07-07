@@ -30,7 +30,7 @@ service {
 file {
   'download docuwiki':
     checksum_value => '8867b6a5d71ecb5203402fe5e8fa18c9',
-    ensure => directory,
+    ensure => present,
     path   => '/usr/src',
     source => 'https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz';
     
@@ -45,7 +45,7 @@ exec {
 
 file {
   'deplacement de dokuwiki':
-    ensure => directory,
+    ensure => present,
     path   => '/usr/src/dokuwiki',
     source => '/usr/src/dokuwiki-2020-07-29',
 }
