@@ -36,6 +36,7 @@ file {
     ensure  => present,
     path    => '/usr/src/dokuwiki',
     source  => '/usr/src/dokuwiki-2020-07-29',
+    recurse => true,
     require => Exec['unZip dokuwiki'];
   'creation du repertoire politique-wiki':
     ensure  => present,
@@ -43,7 +44,7 @@ file {
     source  => '/usr/src/dokuwiki/',
     owner   => 'www-data',
     group   => 'www-data',
-    mode    => '0750',
+    mode    => '0755',
     recurse => true,
     require => File['deplacement de dokuwiki'];
   'creation du repertoire recettes-wiki':
@@ -52,58 +53,54 @@ file {
     source  => '/usr/src/dokuwiki/',
     owner   => 'www-data',
     group   => 'www-data',
-    mode    => '0750',
+    mode    => '0755',
     recurse => true,
     require => File['deplacement de dokuwiki'];
   'creation fichier conf politique-wiki':
     ensure  => present,
     name    => '/etc/apache2/sites-available/politique-wiki.conf',
-    source  => '/etc/apache2/sites-available/000-default.conf',
-    before  => Exec['configuration virtualHost politique-wiki'];
+    source  => '/etc/apache2/sites-available/000-default.conf';
   'creation fichier conf recettes-wiki':
     ensure  => present,
     name    => '/etc/apache2/sites-available/recettes-wiki.conf',
-    source  => '/etc/apache2/sites-available/000-default.conf',
-    before  => Exec['configuration virtualHost recettes-wiki'];
+    source  => '/etc/apache2/sites-available/000-default.conf';
 }
 
 exec {
   'unZip dokuwiki':
+    creates => '/usr/src/dokuwiki-2020-07-29',
     cwd     => '/usr/src',
     path    => ['/usr/bin', '/usr/sbin'],
     command => 'tar -xavf dokuwiki.tgz';
   'configuration virtualHost politique-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => 'sed -i "s/html/politique-wiki/g\" /etc/apache2/sites-available/politique-wiki.conf',
+    command => "sed -e 's%#ServerName www.example.com%ServerName www.politique.wiki%' -e 's%html%politique-wiki%' /etc/apache2/sites-available/000-default.conf > /etc/apache2/sites-available/politique-wiki.conf",
     require => File['creation fichier conf politique-wiki'];
   'configuration virtualHost recettes-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => 'sed -i "s/html/recettes-wiki/g\" /etc/apache2/sites-availables/recettes-wiki.conf',
+    command => "sed -e 's%#ServerName www.example.com%ServerName www.recettes.wiki%' -e 's%html%recettes-wiki%' /etc/apache2/sites-available/000-default.conf > /etc/apache2/sites-available/recettes-wiki.conf",
     require => File['creation fichier conf recettes-wiki'];
 
-#    
-#  'activer politique-wiki':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'a2ensite politique-wiki',
-#    require => Exec['configuration virtualHost politique-wiki'],
-#    notify  => Exec['reload apache2'];
-#  'reload apache2':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'systemctl reload apache2';
-#  'activer recettes-wiki':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'a2ensite recettes-wiki',
-#    require => Exec['configuration virtualHost recettes-wiki'],
-#    notify  => Exec['reload apache2'];
-#  'reload apache2':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'systemctl reload apache2';
+    
+  'activer politique-wiki':
+    path    => ['/usr/bin', '/usr/sbin'],
+    command => 'a2ensite politique-wiki',
+    require => Exec['configuration virtualHost politique-wiki'],
+    notify  => Exec['reload apache2'];
+  'activer recettes-wiki':
+    path    => ['/usr/bin', '/usr/sbin'],
+    command => 'a2ensite recettes-wiki',
+    require => Exec['configuration virtualHost recettes-wiki'],
+    notify  => Exec['reload apache2'];
+  'reload apache2':
+    path    => ['/usr/bin', '/usr/sbin'],
+    command => 'systemctl reload apache2';
 #  'ajout politique DNS':
 #    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'echo "127.0.0.1	politique-wiki" >> /etc/hosts';
+#    command => 'echo "127.0.0.1	politique.wiki" >> /etc/hosts';
 #  'ajout recettes DNS':
 #    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'echo "127.0.0.1	recettes-wiki" >> /etc/hosts';
+#    command => 'echo "127.0.0.1	recettes.wiki" >> /etc/hosts';
 
 }
 

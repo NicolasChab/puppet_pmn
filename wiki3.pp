@@ -36,6 +36,7 @@ file {
     ensure  => present,
     path    => '/usr/src/dokuwiki',
     source  => '/usr/src/dokuwiki-2020-07-29',
+    recurse => true,
     require => Exec['unZip dokuwiki'];
   'creation du repertoire politique-wiki':
     ensure  => present,
@@ -58,27 +59,26 @@ file {
   'creation fichier conf politique-wiki':
     ensure  => present,
     name    => '/etc/apache2/sites-available/politique-wiki.conf',
-    source  => '/etc/apache2/sites-available/000-default.conf',
-    before  => Exec['configuration virtualHost politique-wiki'];
+    source  => '/etc/apache2/sites-available/000-default.conf';
   'creation fichier conf recettes-wiki':
     ensure  => present,
     name    => '/etc/apache2/sites-available/recettes-wiki.conf',
-    source  => '/etc/apache2/sites-available/000-default.conf',
-    before  => Exec['configuration virtualHost recettes-wiki'];
+    source  => '/etc/apache2/sites-available/000-default.conf';
 }
 
 exec {
   'unZip dokuwiki':
+    creates => '/usr/src/dokuwiki-2020-07-29',
     cwd     => '/usr/src',
     path    => ['/usr/bin', '/usr/sbin'],
     command => 'tar -xavf dokuwiki.tgz';
   'configuration virtualHost politique-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => "sed -e 's%#ServerName www.exemple.com%ServerName www.politique.wiki%' -e 's%html%politique-wiki%' /etc/apache2/sites-available/000-default.conf > /etc/apache2/sites-available/politique-wiki.conf",
+    command => "sed -e 's%#ServerName www.example.com%ServerName www.politique.wiki%' -e 's%html%politique-wiki%' /etc/apache2/sites-available/000-default.conf > /etc/apache2/sites-available/politique-wiki.conf",
     require => File['creation fichier conf politique-wiki'];
   'configuration virtualHost recettes-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => "sed -e 's%#ServerName www.exemple.come%ServerName www.recettes.wiki%' -e 's%html%recettes-wiki%' /etc/apache2/sites-available/000-default.conf > /etc/apache2/sites-available/recettes-wiki.conf",
+    command => "sed -e 's%#ServerName www.example.com%ServerName www.recettes.wiki%' -e 's%html%recettes-wiki%' /etc/apache2/sites-available/000-default.conf > /etc/apache2/sites-available/recettes-wiki.conf",
     require => File['creation fichier conf recettes-wiki'];
 
     
@@ -95,12 +95,12 @@ exec {
   'reload apache2':
     path    => ['/usr/bin', '/usr/sbin'],
     command => 'systemctl reload apache2';
-  'ajout politique DNS':
-    path    => ['/usr/bin', '/usr/sbin'],
-    command => 'echo "127.0.0.1	politique.wiki" >> /etc/hosts';
-  'ajout recettes DNS':
-    path    => ['/usr/bin', '/usr/sbin'],
-    command => 'echo "127.0.0.1	recettes.wiki" >> /etc/hosts';
+#  'ajout politique DNS':
+#    path    => ['/usr/bin', '/usr/sbin'],
+#    command => 'echo "127.0.0.1	politique.wiki" >> /etc/hosts';
+#  'ajout recettes DNS':
+#    path    => ['/usr/bin', '/usr/sbin'],
+#    command => 'echo "127.0.0.1	recettes.wiki" >> /etc/hosts';
 
 }
 
