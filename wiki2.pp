@@ -38,19 +38,31 @@ package {
     source  => '/usr/src/dokuwiki-2020-07-29',
     require => Exec['unZip dokuwiki'];
   'creation du repertoire politique-wiki':
-    ensure  => directory,
-    name    => '/var/www/politique-wiki',
+    ensure  => present,
+    path    => '/var/www/politique-wiki/',
+    source  => '/usr/src/dokuwiki/',
     owner   => 'www-data',
     group   => 'www-data',
     mode    => '0750',
-    before  => Exec['installation politique-wiki'];
+    recurse => true;
   'creation du repertoire recettes-wiki':
-    ensure  => directory,
-    name    => '/var/www/recettes-wiki',
+    ensure  => present,
+    path    => '/var/www/recettes-wiki/',
+    source  => '/usr/src/dokuwiki/',
     owner   => 'www-data',
     group   => 'www-data',
     mode    => '0750',
-    before  => Exec['installation recettes-wiki'];
+    recurse => true;
+  'creation fichier conf politique-wiki':
+    ensure  => present,
+    name    => '/etc/apache2/sites-available/politique-wiki.conf',
+    source  => '/etc/apache2/sites-available/000-default.conf',
+    before  => Exec['configuration virtualHost politique-wiki'];
+  'creation fichier conf recettes-wiki':
+    ensure  => present,
+    name    => '/etc/apache2/sites-available/recettes-wiki.conf',
+    source  => '/etc/apache2/sites-available/000-default.conf',
+    before  => Exec['configuration virtualHost recettes-wiki'];
 }
 
 exec {
@@ -58,24 +70,36 @@ exec {
     cwd     => '/usr/src',
     path    => ['/usr/bin', '/usr/sbin'],
     command => 'tar -xavf dokuwiki.tgz';
-  'installation politique-wiki':
-    cwd     => '/',
+  'configuration virtualHost politique-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => 'rsync -av /usr/src/dokuwiki /var/www/politique-wiki';
-  'installation recettes-wiki':
-    cwd     => '/',
+    command => 'sed -i \'/s/html/politique-wiki/g\' /etc/apache2/sites-available/politique-wiki.conf';
+  'configuration virtualHost recettes-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => 'rsync -av /usr/src/dokuwiki /var/www/recettes-wiki';
-#  'fichier de conf politique-wiki':
+    command => 'sed -i \'/s/html/recettes-wiki/g\' /etc/apache2/sites-availables/recettes-wiki.conf';
+
 #    
 #  'activer politique-wiki':
-#    cwd     => '/',
 #    path    => ['/usr/bin', '/usr/sbin'],
 #    command => 'a2ensite politique-wiki',
+#    require => Exec['configuration virtualHost politique-wiki'],
 #    notify  => Exec['reload apache2'];
 #  'reload apache2':
-#    cwd     => '/',
 #    path    => ['/usr/bin', '/usr/sbin'],
 #    command => 'systemctl reload apache2';
+#  'activer recettes-wiki':
+#    path    => ['/usr/bin', '/usr/sbin'],
+#    command => 'a2ensite recettes-wiki',
+#    require => Exec['configuration virtualHost recettes-wiki'],
+#    notify  => Exec['reload apache2'];
+#  'reload apache2':
+#    path    => ['/usr/bin', '/usr/sbin'],
+#    command => 'systemctl reload apache2';
+#  'ajout politique DNS':
+#    path    => ['/usr/bin', '/usr/sbin'],
+#    command => 'echo "127.0.0.1	politique-wiki" >> /etc/hosts';
+#  'ajout recettes DNS':
+#    path    => ['/usr/bin', '/usr/sbin'],
+#    command => 'echo "127.0.0.1	recettes-wiki" >> /etc/hosts';
+
 }
 
