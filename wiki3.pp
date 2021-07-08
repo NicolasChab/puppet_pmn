@@ -43,7 +43,7 @@ file {
     source  => '/usr/src/dokuwiki/',
     owner   => 'www-data',
     group   => 'www-data',
-    mode    => '0750',
+    mode    => '0755',
     recurse => true,
     require => File['deplacement de dokuwiki'];
   'creation du repertoire recettes-wiki':
@@ -52,7 +52,7 @@ file {
     source  => '/usr/src/dokuwiki/',
     owner   => 'www-data',
     group   => 'www-data',
-    mode    => '0750',
+    mode    => '0755',
     recurse => true,
     require => File['deplacement de dokuwiki'];
   'creation fichier conf politique-wiki':
@@ -74,36 +74,33 @@ exec {
     command => 'tar -xavf dokuwiki.tgz';
   'configuration virtualHost politique-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => 'sed -i "s/html/politique-wiki/g\" /etc/apache2/sites-available/politique-wiki.conf',
+    command => "sed -e 's%#ServerName www.exemple.com%ServerName www.politique.wiki%' -e 's%html%politique-wiki%' /etc/apache2/sites-available/000-default.conf > /etc/apache2/sites-available/politique-wiki.conf",
     require => File['creation fichier conf politique-wiki'];
   'configuration virtualHost recettes-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => 'sed -i "s/html/recettes-wiki/g\" /etc/apache2/sites-availables/recettes-wiki.conf',
+    command => "sed -e 's%#ServerName www.exemple.come%ServerName www.recettes.wiki%' -e 's%html%recettes-wiki%' /etc/apache2/sites-available/000-default.conf > /etc/apache2/sites-available/recettes-wiki.conf",
     require => File['creation fichier conf recettes-wiki'];
 
-#    
-#  'activer politique-wiki':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'a2ensite politique-wiki',
-#    require => Exec['configuration virtualHost politique-wiki'],
-#    notify  => Exec['reload apache2'];
-#  'reload apache2':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'systemctl reload apache2';
-#  'activer recettes-wiki':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'a2ensite recettes-wiki',
-#    require => Exec['configuration virtualHost recettes-wiki'],
-#    notify  => Exec['reload apache2'];
-#  'reload apache2':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'systemctl reload apache2';
-#  'ajout politique DNS':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'echo "127.0.0.1	politique-wiki" >> /etc/hosts';
-#  'ajout recettes DNS':
-#    path    => ['/usr/bin', '/usr/sbin'],
-#    command => 'echo "127.0.0.1	recettes-wiki" >> /etc/hosts';
+    
+  'activer politique-wiki':
+    path    => ['/usr/bin', '/usr/sbin'],
+    command => 'a2ensite politique-wiki',
+    require => Exec['configuration virtualHost politique-wiki'],
+    notify  => Exec['reload apache2'];
+  'activer recettes-wiki':
+    path    => ['/usr/bin', '/usr/sbin'],
+    command => 'a2ensite recettes-wiki',
+    require => Exec['configuration virtualHost recettes-wiki'],
+    notify  => Exec['reload apache2'];
+  'reload apache2':
+    path    => ['/usr/bin', '/usr/sbin'],
+    command => 'systemctl reload apache2';
+  'ajout politique DNS':
+    path    => ['/usr/bin', '/usr/sbin'],
+    command => 'echo "127.0.0.1	politique.wiki" >> /etc/hosts';
+  'ajout recettes DNS':
+    path    => ['/usr/bin', '/usr/sbin'],
+    command => 'echo "127.0.0.1	recettes.wiki" >> /etc/hosts';
 
 }
 
