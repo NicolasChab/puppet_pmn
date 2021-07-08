@@ -44,7 +44,8 @@ package {
     owner   => 'www-data',
     group   => 'www-data',
     mode    => '0750',
-    recurse => true;
+    recurse => true,
+    require => File['deplacement de dokuwiki'];
   'creation du repertoire recettes-wiki':
     ensure  => present,
     path    => '/var/www/recettes-wiki/',
@@ -52,7 +53,8 @@ package {
     owner   => 'www-data',
     group   => 'www-data',
     mode    => '0750',
-    recurse => true;
+    recurse => true,
+    require => File['deplacement de dokuwiki'];
   'creation fichier conf politique-wiki':
     ensure  => present,
     name    => '/etc/apache2/sites-available/politique-wiki.conf',
