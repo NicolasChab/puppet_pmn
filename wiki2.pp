@@ -72,10 +72,12 @@ exec {
     command => 'tar -xavf dokuwiki.tgz';
   'configuration virtualHost politique-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => 'sed -i \'/s/html/politique-wiki/g\' /etc/apache2/sites-available/politique-wiki.conf';
+    command => 'sed -i \'/s/html/politique-wiki/g\' /etc/apache2/sites-available/politique-wiki.conf',
+    require => File['creation fichier conf politique-wiki'];
   'configuration virtualHost recettes-wiki':
     path    => ['/usr/bin', '/usr/sbin'],
-    command => 'sed -i \'/s/html/recettes-wiki/g\' /etc/apache2/sites-availables/recettes-wiki.conf';
+    command => 'sed -i \'/s/html/recettes-wiki/g\' /etc/apache2/sites-availables/recettes-wiki.conf',
+    require => File['creation fichier conf recettes-wiki'];
 
 #    
 #  'activer politique-wiki':
