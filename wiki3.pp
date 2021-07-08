@@ -26,12 +26,14 @@ package {
 #    command => 'tar -xavf dokuwiki.tgz';
 #}
 
+
+
 file {
   'download docuwiki':
     checksum_value => '8867b6a5d71ecb5203402fe5e8fa18c9',
-    ensure => present,
-    path   => '/usr/src/dokuwiki.tgz',
-    source => 'https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz';
+    ensure         => present,
+    path           => '/usr/src/dokuwiki.tgz',
+    source         => 'https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz';
   'deplacement de dokuwiki':
     ensure  => present,
     path    => '/usr/src/dokuwiki',
