@@ -14,6 +14,8 @@ class packages {
 }
 
 class extract_dokuwiki {
+  require packages
+
   file {
     'download-dokuwiki':
       ensure         => 'present',
@@ -27,19 +29,20 @@ class extract_dokuwiki {
       cwd     => '/usr/src',
       command => 'tar -xzvf dokuwiki.tgz',
       creates => '/usr/src/dokuwiki',
-      path    => ['/usr/bin', '/usr/sbin',],
+      path    => ['/usr/bin', '/usr/sbin'],
       require => File['download-dokuwiki'];
 
     'copie-dokuwiki':
       cwd     => '/usr/src/',
       command => 'rsync -a dokuwiki/ /var/www/politique && rsync -a dokuwiki/ /var/www/recettes',
-      path    => ['/usr/bin', '/usr/sbin',],
+      path    => ['/usr/bin', '/usr/sbin'],
       require => Exec['extraction-dokuwiki'];
   }
 
 }
 
 class install_dokuwiki ($hostname, $version) {
+  require extract_dokuwiki
 
   host {
     $hostname:
@@ -54,9 +57,9 @@ class install_dokuwiki ($hostname, $version) {
       before => File['create-conf-apache'];
 
     'create-conf-apache':
-	    ensure => 'present',
-	    source => '/etc/apache2/sites-available/000-default.conf',
-	    path   => '/etc/apache2/sites-available/$version.conf',
+      ensure => 'present',
+      source => '/etc/apache2/sites-available/000-default.conf',
+      path   => '/etc/apache2/sites-available/$version.conf',
       before => Exec['changement-conf'];
   }
 
@@ -64,9 +67,9 @@ class install_dokuwiki ($hostname, $version) {
     'changement-conf':
       path    => ['/usr/bin', '/usr/sbin'],
       command =>  'sed -i \'s/html/$version/g\' /etc/apache2/sites-enabled/$version.conf && sed -i \'s/#ServerName www.example.com/ServerName $version.wiki/g\' /etc/apache2/sites-enabled/$version.conf';
-      
+
     'start':
-      path	  => ['/usr/bin/', '/usr/sbin'],
+      path    => ['/usr/bin/', '/usr/sbin'],
       command => 'a2ensite $version';
   }
 }
