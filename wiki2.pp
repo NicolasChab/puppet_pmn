@@ -1,104 +1,113 @@
-class packages {
+
+
+# Déclare les packages nécessaire au systeme
+class dokuwiki::hosting {
   package {
     'apache2':
-      ensure => 'present';
+      ensure => present;
     'php7.3':
-      ensure => 'installed';
+      ensure => present;
   }
 
   service {
     'apache2':
-      ensure => running,
-      enable => true;
+      ensure => running;
   }
 }
 
-class extract_dokuwiki {
-  require packages
+# Les parametres réutilisables
+class dokuwiki::params {
+  $src_dir = '/usr/src'
+  $dokuwiki_archive = "${src_dir}/dokuwiki.tgz"
+  $dokuwiki_dir = "${src_dir}/dokuwiki-2020-07-29"
+}
+
+# Les éléments génériques
+class dokuwiki {
+  include dokuwiki::params
+  include dokuwiki::source
+  include dokuwiki::hosting
+}
+
+# L'installation de dokuwiki depuis les sources
+class dokuwiki::source {
+  include dokuwiki::params
 
   file {
-    'download-dokuwiki':
-      ensure         => 'present',
-      source         => 'https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz',
-      path           => '/usr/src/dokuwiki.tgz',
-      checksum_value => '8867b6a5d71ecb5203402fe5e8fa18c9';
-    'deplacement-dokuwiki':
-      ensure => present,
-      path   => '/usr/src/dokuwiki',
-      source => '/usr/src/dokuwiki-2020-07-29',
-      recurse => true,
-      require => Exec['extraction-dokuwiki'];
+    '/usr/src/dokuwiki.tgz':
+      ensure => 'present',
+      source => 'https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz',
   }
 
   exec {
-    'extraction-dokuwiki':
-      cwd     => '/usr/src',
-      command => 'tar -xzvf dokuwiki.tgz',
-      creates => '/usr/src/dokuwiki',
-      path    => ['/usr/bin', '/usr/sbin'],
-      require => File['download-dokuwiki'];
+    'dokuwiki::unarchive':
+      cwd     => $src_dir,
+      command => "tar xavf ${dokuwiki_archive}",
+      creates => $dokuwiki_dir,
+      path    => ['/bin'],
+      require => File[$dokuwiki_archive];
   }
-
 }
 
-class install_dokuwiki ($hostname, $sitename) {
-  require extract_dokuwiki
-
-  host {
-    $hostname:
-     ip => '127.0.0.1',
-  }
+# Une ressource permettant de déploiement d'un site spécifique
+define dokuwiki::site (String $site_name, String $site_dns) {
+  include dokuwiki::params
 
   file {
-    'creation repertoire site':
-      ensure  => present,
+    "/var/www/${site_name}":
+      ensure  => 'directory',
       owner   => 'www-data',
       group   => 'www-data',
-      mode    => '0755',
-      source  => '/usr/src/dokuwiki',
-      path    => "/var/www/${sitename}",
-      require => File['deplacement-dokuwiki'];
-    'change-permission':
-      ensure => 'directory',
-      path   => "/var/www/${sitename}/data",
-      mode   => '0755',
-      before => File['create-conf-apache'];
+      # mode    => '0755',
+      source  => $dokuwiki_dir,
+      recurse => true;
 
-    'create-conf-apache':
-      ensure => 'present',
-      source => '/etc/apache2/sites-available/000-default.conf',
-      path   => "/etc/apache2/sites-available/${sitename}.conf",
-      before => Exec['changement-conf'];
+    "/etc/apache2/sites-available/${site_name}.conf":
+      ensure  => present,
+      content => template('/home/vagrant/teaching-devops-puppet-v20210628/templates/site.conf.erb'),
+      require => [Package['apache2'],
+      File["/var/www/${site_name}"]];
+
   }
 
   exec {
-    'changement-conf':
+    "enable-vhost-${site_name}":
+      command => "a2ensite ${site_name}",
       path    => ['/usr/bin', '/usr/sbin'],
-      command =>  "sed -i 's/html/${sitename}/g' /etc/apache2/sites-available/${sitename}.conf && sed -i 's/#ServerName www.example.com/ServerName ${hostname}/g' /etc/apache2/sites-available/${sitename}.conf";
+      require => [File["/etc/apache2/sites-available/${site_name}.conf"],
+                  Package['apache2']],
+      notify  => Service['apache2'];
+  }
 
-    'start':
-      path    => ['/usr/bin/', '/usr/sbin'],
-      command => "a2ensite ${sitename}";
+  host {
+    $site_dns:
+      ip => '127.0.0.1';
   }
 }
 
+node 'control' {
+}
 
 node 'server0' {
-  class { 'install_dokuwiki':
-    hostname => 'politique.wiki',
-    sitename => 'politique',
+  include dokuwiki       # les trucs génériques de dokuwiki
+
+  dokuwiki::site {
+    'siteA':
+      site_name => 'politique-wiki',
+      site_dns  => 'politique.wiki';
+
+    'siteB':
+      site_name => 'tajineworld-com',
+      site_dns  => 'tajineworld.com';
   }
-  include packages
-  include extract_dokuwiki
-  include install_dokuwiki
 }
 
 node 'server1' {
-  class { 'install_dokuwiki':
-    hostname => 'recettes.wiki',
-    sitename => 'recettes',
+  include dokuwiki
+
+  dokuwiki::site {
+    'recettes':
+      site_name => 'recettes-wiki',
+      site_dns  => 'recettes.wiki';
   }
-  include packages
-  include extract_dokuwiki
-  include install_dokuwiki
 }
